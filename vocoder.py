@@ -1,17 +1,25 @@
 import numpy as np
 from scipy import signal
-
+import librosa
 from carriers import sawtooth_osc, square_osc
 
 class Channel_Vocoder():
-    def __init__(self, n_channel, sr):
+    def __init__(self, n_channel, sr, freq_scale='linear', filter_type='butter'):
         self.n_channel = n_channel
         self.sr = sr
+        self.freq_scale = freq_scale
+        self.filter_type = filter_type
+        if freq_scale not in ('linear', 'mel'):
+            raise ValueError(f"freq_scale should be either \'linear\' or \'mel\'.")
         
         # Set band-pass filters
         nyq = sr * 0.5
-        bp_range = nyq // self.n_channel
-        self.bp_filters = [Bandpass_Filter(i*bp_range, (i+1)*bp_range, nyq) for i in range(self.n_channel)]
+        if self.freq_scale == 'linear':
+            bp_range = nyq // self.n_channel
+            self.bp_filters = [Bandpass_Filter(i*bp_range, (i+1)*bp_range, nyq, filter_type=self.filter_type) for i in range(self.n_channel)]
+        elif self.freq_scale == 'mel':
+            mel_freqs = librosa.mel_frequencies(n_mels=self.n_channel+1, fmin=0.0, fmax=nyq-1).tolist()
+            self.bp_filters = [Bandpass_Filter(f0, f1, nyq, filter_type=self.filter_type) for f0, f1 in zip(mel_freqs[:-1], mel_freqs[1:])]
         
     def __call__(self, modulator_x, carrier_type='sawtooth', carrier_f0=440):
         # Set carrier signal
@@ -39,10 +47,19 @@ class Channel_Vocoder():
     
 
 class Bandpass_Filter():
-    def __init__(self, low, high, nyq, order=5):
+    def __init__(self, low, high, nyq, filter_type='butter', order=5):
         low = 1 if low == 0 else low
         high = nyq-1 if high == nyq else high
-        self.sos = signal.butter(order, [low/nyq, high/nyq], btype='bandpass', output='sos')
+        filter_types = ['butter', 'cheby1', 'bessel']
+        if filter_type not in filter_types:
+            raise ValueError(f'filter_type should be one of {filter_types}.')
+        
+        if filter_type == 'butter':
+            self.sos = signal.butter(order, Wn=[low/nyq, high/nyq], btype='bandpass', output='sos')
+        elif filter_type == 'cheby1':
+            self.sos = signal.cheby1(order, rp=0.1, Wn=[low/nyq, high/nyq], btype='bandpass', output='sos')
+        elif filter_type == 'bessel':
+            self.sos = signal.bessel(order, Wn=[low/nyq, high/nyq], btype='bandpass', output='sos', norm='phase')
         
     def __call__(self, x):
         return signal.sosfilt(self.sos, x)
