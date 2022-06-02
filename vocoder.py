@@ -47,10 +47,10 @@ class Channel_Vocoder():
     
 
 class Bandpass_Filter():
-    def __init__(self, low, high, nyq, filter_type='butter', order=5):
+    def __init__(self, low, high, nyq, filter_type='butter', order=10):
         low = 1 if low == 0 else low
         high = nyq-1 if high == nyq else high
-        filter_types = ['butter', 'cheby1', 'bessel']
+        filter_types = ['butter', 'cheby1', 'bessel', 'biquad']
         if filter_type not in filter_types:
             raise ValueError(f'filter_type should be one of {filter_types}.')
         
@@ -60,6 +60,16 @@ class Bandpass_Filter():
             self.sos = signal.cheby1(order, rp=0.1, Wn=[low/nyq, high/nyq], btype='bandpass', output='sos')
         elif filter_type == 'bessel':
             self.sos = signal.bessel(order, Wn=[low/nyq, high/nyq], btype='bandpass', output='sos', norm='phase')
+        elif filter_type == 'biquad':
+            cutoff_freq = (low + high) / 2
+            Q = order
+            sr = 2*nyq
+            # bi-quad lowpass filter -> bandpass로 바꾸기..?
+            theta = 2*np.pi*cutoff_freq/sr
+            alpha = np.sin(theta)/2/Q
+            b = [(1-np.cos(theta)), 2*(1-np.cos(theta)), (1-np.cos(theta))]
+            a = [(1+alpha), -2*np.cos(theta), (1-alpha)]
+            self.sos = signal.tf2sos(b, a)
         
     def __call__(self, x):
         return signal.sosfilt(self.sos, x)
