@@ -13,10 +13,10 @@ class Carrier():
             y = self.make_sawtooth_osc(freqs[0], self.dur, self.sr)
         elif self.name == 'square':
             y = self.make_square_osc(freqs[0], self.dur, self.sr)
-        elif self.name == 'exp_sine':
-            y = self.make_exp_sine_osc(freqs[0], freqs[1], self.dur, self.sr)
+        elif self.name == 'exp_sawtooth':
+            y = self.make_exp_sawtooth_osc(freqs[0], freqs[1], self.dur, self.sr)
         else:
-            f_path = f"./audio_resources/{self.name}.wav"
+            f_path = f"./audio_resources/carrier/{self.name}.wav"
             if not os.path.exists(f_path):
                 raise "Carrier Source File Not Exist"
             y, _ = librosa.load(f_path, sr=self.sr, duration=(self.dur//self.sr)+1) 
@@ -62,7 +62,7 @@ class Carrier():
 
         return x  
     
-    def make_exp_sine_osc(self, f_start, f_stop, dur, sr):
+    def make_exp_sawtooth_osc(self, f_start, f_stop, dur, sr):
         freq = self.powspace(f_start, f_stop, dur)
 
         phase = 0
