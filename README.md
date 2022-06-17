@@ -12,3 +12,5 @@ We constructed our own **Vocoder Effect and related parameters to mimick several
   We also generated interesting results with various types of carrier sounds.
 
 You can check the result samples and detail on our [demo page](https://yoonjinxd.github.io/vocoder_demo/).
+
+If you want to run and test with the samples, please check ```vocoder_test.ipynb```.
