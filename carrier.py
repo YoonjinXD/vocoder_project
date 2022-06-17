@@ -20,9 +20,10 @@ class Carrier():
         elif self.name == 'pow_sawtooth':
             y = self.make_pow_sawtooth_osc(freqs[0], freqs[1], self.dur, self.sr)
         else:
-            f_path = f"./audio_resources/carrier/{self.name}.wav"
+            f_path = f"./audio_resources/carriers/{self.name}.wav"
             if not os.path.exists(f_path):
-                raise "Carrier Source File Not Exist"
+                print("Carrier Source File Not Exist")
+                return None
             y, _ = librosa.load(f_path, sr=self.sr, duration=(self.dur//self.sr)+1) 
             y = y[:int(self.dur)]
         return y
