@@ -42,6 +42,9 @@ class Channel_Vocoder():
         # Set carrier signal
         dur = modulator_x.shape[0]
         carrier_x = Carrier(carrier_type, dur, self.sr)(carrier_f0, carrier_f_inc)
+        if carrier_x.shape[0] < dur:
+            print('Carrier duration is shorter than the modulator. Please select different carrier or modulator.')
+            return
         
         # high-freq noise
         if high_noise:
